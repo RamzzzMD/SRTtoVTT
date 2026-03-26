@@ -238,12 +238,36 @@
       fetchBtn.disabled = true;
       fetchBtnText.textContent = 'Memproses...';
       
+      let response;
+      let text = '';
+      
       try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        // PERCOBAAN 1: Direct Fetch (Akses Langsung)
+        try {
+          response = await fetch(url);
+          if (!response.ok) throw new Error(`Status: ${response.status}`);
+          text = await response.text();
+        } catch (directError) {
+          console.log("Direct fetch gagal, mencoba Proxy CORS 1...", directError);
+          
+          // PERCOBAAN 2: CORS Proxy 1 (AllOrigins)
+          try {
+            const proxyUrl1 = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            response = await fetch(proxyUrl1);
+            if (!response.ok) throw new Error(`Proxy 1 Status: ${response.status}`);
+            text = await response.text();
+          } catch (proxyError1) {
+            console.log("Proxy 1 gagal, mencoba Proxy CORS 2...", proxyError1);
+            
+            // PERCOBAAN 3: CORS Proxy 2 (CorsProxy.io)
+            const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            response = await fetch(proxyUrl2);
+            if (!response.ok) throw new Error(`Proxy 2 Status: ${response.status}`);
+            text = await response.text();
+          }
+        }
         
-        const text = await response.text();
-        
+        // Ekstrak nama file dari URL
         try {
           const urlObj = new URL(url);
           const pathParts = urlObj.pathname.split('/');
@@ -257,10 +281,10 @@
         }
 
         updateUI(text);
-        if(!isRawMode) showMessage('Berhasil mengambil subtitle dari URL', 'success');
+        if(!isRawMode) showMessage('Berhasil mengambil subtitle', 'success');
         
       } catch (error) {
-        showMessage(`Gagal mengambil dari URL. Ini biasanya karena pemblokiran CORS dari server asal URL. (Error: ${error.message})`, 'error');
+        showMessage(`Gagal mengambil dari URL setelah menggunakan Proxy bypass. Server mungkin memblokir akses secara ketat. (Error: ${error.message})`, 'error');
       } finally {
         fetchBtn.disabled = false;
         fetchBtnText.textContent = 'Ambil';
