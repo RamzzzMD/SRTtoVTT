@@ -280,11 +280,17 @@
           currentFileName = 'subtitle_dari_url.srt';
         }
 
+        // VALIDASI: Pastikan konten bukan XML/HTML Error
+        const trimmedText = text.trim();
+        if (trimmedText.startsWith('<?xml') || trimmedText.startsWith('<html') || trimmedText.startsWith('<!DOCTYPE') || trimmedText.includes('<Error>')) {
+           throw new Error("URL mengembalikan halaman web atau pesan error (seperti MissingKey otentikasi), bukan teks subtitle SRT. URL mungkin dilindungi kredensial atau sudah kedaluwarsa.");
+        }
+
         updateUI(text);
         if(!isRawMode) showMessage('Berhasil mengambil subtitle', 'success');
         
       } catch (error) {
-        showMessage(`Gagal mengambil dari URL setelah menggunakan Proxy bypass. Server mungkin memblokir akses secara ketat. (Error: ${error.message})`, 'error');
+        showMessage(`Gagal mengambil dari URL. (Penyebab: ${error.message})`, 'error');
       } finally {
         fetchBtn.disabled = false;
         fetchBtnText.textContent = 'Ambil';
